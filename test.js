@@ -5,6 +5,7 @@ const traverse = require('babel-traverse').default
 const generate = require('babel-generator').default
 const t = require('babel-types')
 const process = require('process'); 
+const prettier = require('prettier')
 // const child_process = require('child_process')
 // const babel = require('babylon')
 class WebToTaro {
@@ -23,17 +24,10 @@ class WebToTaro {
         // ]
         this.plugins = {
                 "presets": [
-                    // "@babel/preset-env",
                     "@babel/preset-react",
                 ],
-                // "plugins": [
-                //     [
-                //         "@babel/plugin-proposal-decorators",
-                //         {
-                //             "legacy": true
-                //         }
-                //     ],
-                // ]
+                "plugins": [
+                ]
             }
         // child_process.exec(`rm -rf ${path.join(this.root,this.outPath)}`)
         this.createDir(path.join(this.root,this.outPath))
@@ -84,7 +78,8 @@ class WebToTaro {
     // 转换单个文件
     tranFormFile(filePath) {
         const fileText = file.readFileSync(path.join(this.root, filePath), 'utf-8')
-        const ast = babel.parse(fileText, {...this.plugins,filename:'./babel.config.js'})
+        const txt = prettier.format(fileText, { semi: true, parser: "babel-flow", tabWidth: 3, printWidth: 200, useTabs: true })
+        const ast = babel.parse(txt, {...this.plugins,filename:'./babel.config.js'})
         traverse(ast, {
             Program(path) {
                 path.node.body.forEach((e, index) => {
@@ -107,8 +102,8 @@ class WebToTaro {
             }
         })
         const text = generate(ast).code
-
-        file.writeFileSync(path.join(this.root,this.outPath,filePath), text, 'utf-8')
+        const tranText = prettier.format(text, { semi: true, parser: "babel-flow", tabWidth: 3, printWidth:200,useTabs:true });
+        file.writeFileSync(path.join(this.root, this.outPath, filePath), tranText, 'utf-8')
     }
 }
 const webTaro = new WebToTaro({
